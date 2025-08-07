@@ -1,0 +1,51 @@
+# Cart Service Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cart-service
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cart-service
+  template:
+    metadata:
+      labels:
+        app: cart-service
+    spec:
+      serviceAccountName: s3-sa
+      containers:
+      - name: cart-service
+        image: 862016452072.dkr.ecr.us-east-2.amazonaws.com/kubox:cart-service-v1
+        ports:
+        - containerPort: 8084
+        envFrom:
+        - configMapRef:
+            name: kubox-config
+        - secretRef:
+            name: kubox-secrets
+        env:
+        - name: DB_NAME
+          value: "cart_db"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "400m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cart-service
+  namespace: default
+spec:
+  selector:
+    app: cart-service
+  ports:
+  - port: 8084
+    targetPort: 8084
+  type: ClusterIP

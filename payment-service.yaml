@@ -1,0 +1,51 @@
+# Payment Service Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment-service
+  template:
+    metadata:
+      labels:
+        app: payment-service
+    spec:
+      serviceAccountName: s3-sa
+      containers:
+      - name: payment-service
+        image: 862016452072.dkr.ecr.us-east-2.amazonaws.com/kubox:payment-service-v1
+        ports:
+        - containerPort: 8083
+        envFrom:
+        - configMapRef:
+            name: kubox-config
+        - secretRef:
+            name: kubox-secrets
+        env:
+        - name: DB_NAME
+          value: "payment_db"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "400m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-service
+  namespace: default
+spec:
+  selector:
+    app: payment-service
+  ports:
+  - port: 8083
+    targetPort: 8083
+  type: ClusterIP

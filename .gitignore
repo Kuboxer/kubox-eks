@@ -1,0 +1,70 @@
+# Kubernetes 관련
+*.bak
+*.backup
+*.tmp
+*~
+
+# 로그 파일
+*.log
+logs/
+
+# 임시 파일
+.tmp/
+temp/
+tmp/
+
+# IDE 및 에디터
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# 개발 도구
+.envrc
+
+# Kubernetes 디버그 파일
+debug*.yaml
+test*.yaml
+*debug.yaml
+*test.yaml
+
+# 백업 파일
+*backup.yaml
+*old.yaml
+
+# 개인 설정 파일
+local*.yaml
+dev*.yaml
+*local.yaml
+
+# 실행 중 생성되는 파일
+kubectl*.log
+deployment*.log
+
+# 민감한 정보가 포함될 수 있는 파일
+*secrets*.yaml
+*password*.yaml
+private*.yaml
+
+# 압축 파일
+*.zip
+*.tar.gz
+*.tar
+*.rar
+
+# 문서 임시 파일
+*.pdf~
+*.docx~
