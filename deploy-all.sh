@@ -4,19 +4,14 @@
 
 echo "🚀 Kubox 쇼핑몰 서비스 배포 시작..."
 
-echo "⚙️ 1. ConfigMap, Secret, PVC 배포..."
-kubectl apply -f configmap.yaml
-kubectl apply -f secrets.yaml
-kubectl apply -f pvc.yaml
-
-echo "📦 2. 데이터베이스 및 캐시 배포..."
-kubectl apply -f mysql-db.yaml
-kubectl apply -f redis-cache.yaml
+echo "📊 1. 데이터베이스 및 캐시 배포..."
+kubectl apply -f mysql.yaml
+kubectl apply -f redis.yaml
 
 echo "⏳ 데이터베이스 준비 대기 (60초)..."
 sleep 60
 
-echo "🛍️ 3. 마이크로서비스 배포..."
+echo "🛍️ 2. 마이크로서비스 배포..."
 kubectl apply -f user-service.yaml
 kubectl apply -f product-service.yaml
 
@@ -30,7 +25,7 @@ kubectl apply -f payment-service.yaml
 echo "⏳ 전체 서비스 시작 대기 (60초)..."
 sleep 60
 
-echo "📊 4. 배포 상태 확인..."
+echo "📊 3. 배포 상태 확인..."
 echo "================================"
 echo "Pods:"
 kubectl get pods

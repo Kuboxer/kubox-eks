@@ -1,4 +1,30 @@
-# Product Service Deployment
+# 1. Product Service Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: product-secret
+  namespace: default
+type: Opaque
+stringData:
+  DB_HOST: "mysql-svc"
+  DB_PORT: "3306"
+  DB_USERNAME: "shop_user"
+  DB_PASSWORD: "shop_password"
+  REDIS_HOST: "redis-svc"
+  REDIS_PORT: "6379"
+  JWT_SECRET_KEY: "mySecretKeyForJWTTokenGeneration2024"
+  JWT_EXPIRATION: "86400000"
+  BOOTPAY_API_URL: "https://api.bootpay.co.kr"
+  BOOTPAY_APPLICATION_ID: "688989d686cd66f61255b60b"
+  BOOTPAY_PRIVATE_KEY: "P4s4fN5fI3l1zRJNqvBdpKuSjW+dYx111VXXqWHayZU="
+  CORS_ALLOWED_ORIGINS: "*"
+  CORS_ALLOWED_METHODS: "GET,POST,PUT,DELETE"
+  CORS_ALLOWED_HEADERS: "*"
+  LOG_LEVEL: "DEBUG"
+  AWS_DEFAULT_REGION: "us-east-2"
+
+---
+# 2. Product Service Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -17,42 +43,51 @@ spec:
       serviceAccountName: s3-sa
       containers:
       - name: product-service
-        image: 862016452072.dkr.ecr.us-east-2.amazonaws.com/kubox:product-service-v1
+        image: 862016452072.dkr.ecr.us-east-2.amazonaws.com/kubox:product-service-v3
         ports:
         - containerPort: 8081
+          name: http
         envFrom:
-        - configMapRef:
-            name: kubox-config
         - secretRef:
-            name: kubox-secrets
+            name: product-secret
         env:
         - name: DB_NAME
           value: "product_db"
+        startupProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8081
+          periodSeconds: 5
+          failureThreshold: 40
+          timeoutSeconds: 2
         livenessProbe:
           httpGet:
-            path: /health
+            path: /actuator/health
             port: 8081
-          initialDelaySeconds: 60
-          periodSeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 3
         readinessProbe:
           httpGet:
-            path: /health
+            path: /actuator/health
             port: 8081
-          initialDelaySeconds: 30
           periodSeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 3
         resources:
           requests:
             memory: "256Mi"
-            cpu: "200m"
+            cpu: "100m"
           limits:
             memory: "512Mi"
-            cpu: "400m"
+            cpu: "200m"
 
 ---
+# 3. Product Service
 apiVersion: v1
 kind: Service
 metadata:
-  name: product-service
+  name: product-svc
   namespace: default
 spec:
   selector:
@@ -60,4 +95,5 @@ spec:
   ports:
   - port: 8081
     targetPort: 8081
+    name: http
   type: ClusterIP

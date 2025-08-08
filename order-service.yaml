@@ -1,4 +1,27 @@
-# Order Service Deployment
+# 1. Order Service Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: order-secret
+  namespace: default
+type: Opaque
+stringData:
+  DB_HOST: "mysql-svc"
+  DB_PORT: "3306"
+  DB_USERNAME: "shop_user"
+  DB_PASSWORD: "shop_password"
+  REDIS_HOST: "redis-svc"
+  REDIS_PORT: "6379"
+  JWT_SECRET_KEY: "mySecretKeyForJWTTokenGeneration2024"
+  JWT_EXPIRATION: "86400000"
+  CORS_ALLOWED_ORIGINS: "*"
+  CORS_ALLOWED_METHODS: "GET,POST,PUT,DELETE"
+  CORS_ALLOWED_HEADERS: "*"
+  LOG_LEVEL: "DEBUG"
+  AWS_DEFAULT_REGION: "us-east-2"
+
+---
+# 2. Order Service Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -17,30 +40,51 @@ spec:
       serviceAccountName: s3-sa
       containers:
       - name: order-service
-        image: 862016452072.dkr.ecr.us-east-2.amazonaws.com/kubox:order-service-v1
+        image: 862016452072.dkr.ecr.us-east-2.amazonaws.com/kubox:order-service-v3
         ports:
         - containerPort: 8082
+          name: http
         envFrom:
-        - configMapRef:
-            name: kubox-config
         - secretRef:
-            name: kubox-secrets
+            name: order-secret
         env:
         - name: DB_NAME
           value: "order_db"
+        startupProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8082
+          periodSeconds: 5
+          failureThreshold: 40
+          timeoutSeconds: 2
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8082
+          periodSeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8082
+          periodSeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 3
         resources:
           requests:
             memory: "256Mi"
-            cpu: "200m"
+            cpu: "100m"
           limits:
             memory: "512Mi"
-            cpu: "400m"
+            cpu: "200m"
 
 ---
+# 3. Order Service
 apiVersion: v1
 kind: Service
 metadata:
-  name: order-service
+  name: order-svc
   namespace: default
 spec:
   selector:
@@ -48,4 +92,5 @@ spec:
   ports:
   - port: 8082
     targetPort: 8082
+    name: http
   type: ClusterIP

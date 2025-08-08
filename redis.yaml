@@ -1,10 +1,11 @@
-# Redis 캐시 Deployment
+# 1. Redis StatefulSet
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: redis
   namespace: default
 spec:
+  serviceName: "redis-svc"
   replicas: 1
   selector:
     matchLabels:
@@ -19,6 +20,7 @@ spec:
         image: redis:7-alpine
         ports:
         - containerPort: 6379
+          name: redis
         volumeMounts:
         - name: redis-data
           mountPath: /data
@@ -34,30 +36,37 @@ spec:
             command:
             - redis-cli
             - ping
-          initialDelaySeconds: 5
+          initialDelaySeconds: 10
           periodSeconds: 5
         resources:
           requests:
+            memory: "128Mi"
+            cpu: "50m"
+          limits:
             memory: "256Mi"
             cpu: "100m"
-          limits:
-            memory: "512Mi"
-            cpu: "200m"
-      volumes:
-      - name: redis-data
-        persistentVolumeClaim:
-          claimName: redis-pvc
+  volumeClaimTemplates:
+  - metadata:
+      name: redis-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: standard
+      resources:
+        requests:
+          storage: 1Gi
 
 ---
+# 2. Redis Service
 apiVersion: v1
 kind: Service
 metadata:
-  name: redis-service
+  name: redis-svc
   namespace: default
 spec:
-  selector:
-    app: redis
   ports:
   - port: 6379
     targetPort: 6379
+    name: redis
+  selector:
+    app: redis
   type: ClusterIP

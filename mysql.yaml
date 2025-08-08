@@ -1,21 +1,40 @@
-# MySQL 초기화 스크립트 ConfigMap
+# 1. MySQL Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-secret
+  namespace: default
+type: Opaque
+stringData:
+  MYSQL_ROOT_PASSWORD: "rootpassword"
+  MYSQL_USER: "shop_user"
+  MYSQL_PASSWORD: "shop_password"
+
+---
+# 2. MySQL ConfigMap
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: mysql-init-script
+  name: mysql-config
+  namespace: default
+data:
+  MYSQL_DATABASE: "shop_db"
+
+---
+# 3. MySQL Init ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-init-config
   namespace: default
 data:
   init-db.sql: |
-    -- 데이터베이스 초기화 스크립트
-    
-    -- 각 서비스별 데이터베이스 생성
     CREATE DATABASE IF NOT EXISTS user_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     CREATE DATABASE IF NOT EXISTS product_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     CREATE DATABASE IF NOT EXISTS order_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     CREATE DATABASE IF NOT EXISTS payment_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     CREATE DATABASE IF NOT EXISTS cart_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     
-    -- shop_user에게 모든 데이터베이스 권한 부여
     GRANT ALL PRIVILEGES ON user_db.* TO 'shop_user'@'%';
     GRANT ALL PRIVILEGES ON product_db.* TO 'shop_user'@'%';
     GRANT ALL PRIVILEGES ON order_db.* TO 'shop_user'@'%';
@@ -25,13 +44,14 @@ data:
     FLUSH PRIVILEGES;
 
 ---
-# MySQL 데이터베이스 Deployment
+# 4. MySQL StatefulSet
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: mysql
   namespace: default
 spec:
+  serviceName: "mysql-svc"
   replicas: 1
   selector:
     matchLabels:
@@ -44,13 +64,14 @@ spec:
       containers:
       - name: mysql
         image: mysql:8.0
+        envFrom:
+        - secretRef:
+            name: mysql-secret
+        - configMapRef:
+            name: mysql-config
         ports:
         - containerPort: 3306
-        envFrom:
-        - configMapRef:
-            name: kubox-config
-        - secretRef:
-            name: kubox-secrets
+          name: mysql
         volumeMounts:
         - name: mysql-data
           mountPath: /var/lib/mysql
@@ -63,12 +84,9 @@ spec:
             - ping
             - -h
             - localhost
-            - -u
-            - shop_user
-            - -pshop_password
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 5
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
         readinessProbe:
           exec:
             command:
@@ -76,37 +94,42 @@ spec:
             - ping
             - -h
             - localhost
-            - -u
-            - shop_user
-            - -pshop_password
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 3
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
         resources:
           requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
             memory: "512Mi"
             cpu: "250m"
-          limits:
-            memory: "1Gi"
-            cpu: "500m"
       volumes:
-      - name: mysql-data
-        persistentVolumeClaim:
-          claimName: mysql-pvc
       - name: mysql-init
         configMap:
-          name: mysql-init-script
+          name: mysql-init-config
+  volumeClaimTemplates:
+  - metadata:
+      name: mysql-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: standard
+      resources:
+        requests:
+          storage: 10Gi
 
 ---
+# 5. MySQL Service
 apiVersion: v1
 kind: Service
 metadata:
-  name: mysql-service
+  name: mysql-svc
   namespace: default
 spec:
-  selector:
-    app: mysql
   ports:
   - port: 3306
     targetPort: 3306
+    name: mysql
+  selector:
+    app: mysql
   type: ClusterIP
