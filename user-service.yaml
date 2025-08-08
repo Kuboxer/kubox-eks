@@ -43,7 +43,7 @@ spec:
       serviceAccountName: s3-sa
       containers:
       - name: user-service
-        image: 862016452072.dkr.ecr.us-east-2.amazonaws.com/kubox:user-service-v3
+        image: 862016452072.dkr.ecr.us-east-2.amazonaws.com/kubox:user-service-v5
         ports:
         - containerPort: 8080
           name: http
