@@ -17,7 +17,7 @@ stringData:
   BOOTPAY_API_URL: "https://api.bootpay.co.kr"
   BOOTPAY_APPLICATION_ID: "688989d686cd66f61255b60b"
   BOOTPAY_PRIVATE_KEY: "P4s4fN5fI3l1zRJNqvBdpKuSjW+dYx111VXXqWHayZU="
-  CORS_ALLOWED_ORIGINS: "*"
+  CORS_ALLOWED_ORIGINS: "https://www.kubox.shop,https://api.kubox.shop"
   CORS_ALLOWED_METHODS: "GET,POST,PUT,DELETE"
   CORS_ALLOWED_HEADERS: "*"
   LOG_LEVEL: "DEBUG"
@@ -43,7 +43,7 @@ spec:
       serviceAccountName: s3-sa
       containers:
       - name: payment-service
-        image: 862016452072.dkr.ecr.us-east-2.amazonaws.com/kubox:payment-service-v3
+        image: 862016452072.dkr.ecr.us-east-2.amazonaws.com/kubox:payment-service-v1
         ports:
         - containerPort: 8083
           name: http
