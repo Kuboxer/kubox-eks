@@ -15,7 +15,14 @@ spec:
   rules:
   - http:
       paths:
-      # API 라우팅
+      # API 라우팅 - payment 우선순위 1위
+      - path: /api/payment
+        pathType: Prefix
+        backend:
+          service:
+            name: payment-svc
+            port:
+              number: 8083
       - path: /api/users
         pathType: Prefix
         backend:
@@ -37,13 +44,6 @@ spec:
             name: order-svc
             port:
               number: 8082
-      - path: /api/payments
-        pathType: Prefix
-        backend:
-          service:
-            name: payment-svc
-            port:
-              number: 8083
       - path: /api/cart
         pathType: Prefix
         backend:
