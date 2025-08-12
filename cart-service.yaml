@@ -1,27 +1,4 @@
-# 1. Cart Service Secret
-apiVersion: v1
-kind: Secret
-metadata:
-  name: cart-secret
-  namespace: default
-type: Opaque
-stringData:
-  DB_HOST: "mysql-svc"
-  DB_PORT: "3306"
-  DB_USERNAME: "shop_user"
-  DB_PASSWORD: "shop_password"
-  REDIS_HOST: "redis-svc"
-  REDIS_PORT: "6379"
-  JWT_SECRET_KEY: "mySecretKeyForJWTTokenGeneration2024"
-  JWT_EXPIRATION: "86400000"
-  CORS_ALLOWED_ORIGINS: "https://www.kubox.shop,https://api.kubox.shop"
-  CORS_ALLOWED_METHODS: "GET,POST,PUT,DELETE"
-  CORS_ALLOWED_HEADERS: "*"
-  LOG_LEVEL: "DEBUG"
-  AWS_DEFAULT_REGION: "us-east-2"
-
----
-# 2. Cart Service Deployment
+# Cart Service Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -37,7 +14,7 @@ spec:
       labels:
         app: cart-service
     spec:
-      serviceAccountName: s3-sa
+      serviceAccountName: kubox-secrets-sa
       containers:
       - name: cart-service
         image: 862016452072.dkr.ecr.us-east-2.amazonaws.com/kubox:cart-service-v1
@@ -46,10 +23,14 @@ spec:
           name: http
         envFrom:
         - secretRef:
-            name: cart-secret
+            name: kubox-common-secret
         env:
         - name: DB_NAME
           value: "cart_db"
+        volumeMounts:
+        - name: secrets-store
+          mountPath: /mnt/secrets
+          readOnly: true
         startupProbe:
           httpGet:
             path: /actuator/health
@@ -78,9 +59,16 @@ spec:
           limits:
             memory: "512Mi"
             cpu: "200m"
+      volumes:
+      - name: secrets-store
+        csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: kubox-secrets
 
 ---
-# 3. Cart Service
+# Cart Service
 apiVersion: v1
 kind: Service
 metadata:

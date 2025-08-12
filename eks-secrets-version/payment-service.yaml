@@ -1,4 +1,30 @@
-# Payment Service Deployment
+# 1. Payment Service Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: payment-secret
+  namespace: default
+type: Opaque
+stringData:
+  DB_HOST: "mysql-svc"
+  DB_PORT: "3306"
+  DB_USERNAME: "shop_user"
+  DB_PASSWORD: "shop_password"
+  REDIS_HOST: "redis-svc"
+  REDIS_PORT: "6379"
+  JWT_SECRET_KEY: "mySecretKeyForJWTTokenGeneration2024"
+  JWT_EXPIRATION: "86400000"
+  BOOTPAY_API_URL: "https://api.bootpay.co.kr"
+  BOOTPAY_APPLICATION_ID: "688989d686cd66f61255b60b"
+  BOOTPAY_PRIVATE_KEY: "P4s4fN5fI3l1zRJNqvBdpKuSjW+dYx111VXXqWHayZU="
+  CORS_ALLOWED_ORIGINS: "https://www.kubox.shop,https://api.kubox.shop"
+  CORS_ALLOWED_METHODS: "GET,POST,PUT,DELETE"
+  CORS_ALLOWED_HEADERS: "*"
+  LOG_LEVEL: "DEBUG"
+  AWS_DEFAULT_REGION: "us-east-2"
+
+---
+# 2. Payment Service Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -14,7 +40,7 @@ spec:
       labels:
         app: payment-service
     spec:
-      serviceAccountName: kubox-secrets-sa
+      serviceAccountName: s3-sa
       containers:
       - name: payment-service
         image: 862016452072.dkr.ecr.us-east-2.amazonaws.com/kubox:payment-service-v1
@@ -23,16 +49,10 @@ spec:
           name: http
         envFrom:
         - secretRef:
-            name: kubox-common-secret
-        - secretRef:
-            name: kubox-bootpay-secret
+            name: payment-secret
         env:
         - name: DB_NAME
           value: "payment_db"
-        volumeMounts:
-        - name: secrets-store
-          mountPath: /mnt/secrets
-          readOnly: true
         startupProbe:
           httpGet:
             path: /actuator/health
@@ -61,16 +81,9 @@ spec:
           limits:
             memory: "512Mi"
             cpu: "200m"
-      volumes:
-      - name: secrets-store
-        csi:
-          driver: secrets-store.csi.k8s.io
-          readOnly: true
-          volumeAttributes:
-            secretProviderClass: kubox-secrets
 
 ---
-# Payment Service
+# 3. Payment Service
 apiVersion: v1
 kind: Service
 metadata:

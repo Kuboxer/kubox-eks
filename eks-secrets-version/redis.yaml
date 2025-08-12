@@ -1,4 +1,4 @@
-# Redis StatefulSet (기존 방식 - 시크릿 불필요)
+# 1. Redis StatefulSet
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -56,7 +56,7 @@ spec:
           storage: 1Gi
 
 ---
-# Redis Service
+# 2. Redis Service
 apiVersion: v1
 kind: Service
 metadata:
