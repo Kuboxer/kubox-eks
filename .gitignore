@@ -55,7 +55,6 @@ kubectl*.log
 deployment*.log
 
 # 민감한 정보가 포함될 수 있는 파일
-*secrets*.yaml
 *password*.yaml
 private*.yaml
 
