@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: secrets-test
+  namespace: default
+spec:
+  serviceAccountName: kubox-secrets-sa
+  containers:
+  - name: busybox
+    image: busybox
+    command: ["sleep", "300"]
+    volumeMounts:
+    - name: secrets-store
+      mountPath: /mnt/secrets
+      readOnly: true
+  volumes:
+  - name: secrets-store
+    csi:
+      driver: secrets-store.csi.k8s.io
+      readOnly: true
+      volumeAttributes:
+        secretProviderClass: kubox-secrets
+  restartPolicy: Never

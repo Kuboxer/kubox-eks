@@ -4,7 +4,7 @@
 kubectl apply -f secret-provider-class.yaml
 
 # 2. 시크릿 생성 테스트 Job
-kubectl apply -f secrets-test.yaml
+kubectl apply -f first-init.yaml
 kubectl get pod -w
 # 1/1 Running 확인
 
