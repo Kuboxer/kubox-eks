@@ -1,34 +1,32 @@
-# User Service Deployment
+# Order Service Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: user-service
-  namespace: default
+  name: order-service
+  namespace: app-services
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: user-service
+      app: order-service
   template:
     metadata:
       labels:
-        app: user-service
+        app: order-service
     spec:
       serviceAccountName: kubox-secrets-sa
       containers:
-      - name: user-service
-        image: 862016452072.dkr.ecr.us-east-2.amazonaws.com/kubox:user-service-latest
+      - name: order-service
+        image: 862016452072.dkr.ecr.us-east-2.amazonaws.com/kubox:order-service-latest
         ports:
-        - containerPort: 8080
+        - containerPort: 8082
           name: http
         envFrom:
         - secretRef:
             name: kubox-common-secret
-        - secretRef:
-            name: kubox-bootpay-secret
         env:
         - name: DB_NAME
-          value: "user_db"
+          value: "order_db"
         volumeMounts:
         - name: secrets-store
           mountPath: /mnt/secrets
@@ -36,21 +34,21 @@ spec:
         startupProbe:
           httpGet:
             path: /actuator/health
-            port: 8080
+            port: 8082
           periodSeconds: 5
           failureThreshold: 40
           timeoutSeconds: 2
         livenessProbe:
           httpGet:
             path: /actuator/health
-            port: 8080
+            port: 8082
           periodSeconds: 10
           timeoutSeconds: 2
           failureThreshold: 3
         readinessProbe:
           httpGet:
             path: /actuator/health
-            port: 8080
+            port: 8082
           periodSeconds: 10
           timeoutSeconds: 2
           failureThreshold: 3
@@ -70,17 +68,17 @@ spec:
             secretProviderClass: kubox-secrets
 
 ---
-# User Service
+# Order Service
 apiVersion: v1
 kind: Service
 metadata:
-  name: user-svc
-  namespace: default
+  name: order-svc
+  namespace: app-services
 spec:
   selector:
-    app: user-service
+    app: order-service
   ports:
-  - port: 8080
-    targetPort: 8080
+  - port: 8082
+    targetPort: 8082
     name: http
   type: ClusterIP

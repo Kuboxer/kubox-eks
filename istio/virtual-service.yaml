@@ -17,7 +17,7 @@ spec:
         prefix: /api/users
     route:
     - destination:
-        host: user-svc.default.svc.cluster.local
+        host: user-svc.app-services.svc.cluster.local
         port:
           number: 8080
     timeout: 30s
@@ -37,7 +37,7 @@ spec:
         prefix: /api/products
     route:
     - destination:
-        host: product-svc.default.svc.cluster.local
+        host: product-svc.app-services.svc.cluster.local
         port:
           number: 8081
     timeout: 30s
@@ -52,7 +52,7 @@ spec:
         prefix: /api/cart
     route:
     - destination:
-        host: cart-svc.default.svc.cluster.local
+        host: cart-svc.app-services.svc.cluster.local
         port:
           number: 8084
     timeout: 30s
@@ -67,7 +67,7 @@ spec:
         prefix: /api/orders
     route:
     - destination:
-        host: order-svc.default.svc.cluster.local
+        host: order-svc.app-services.svc.cluster.local
         port:
           number: 8082
     timeout: 30s
@@ -80,11 +80,9 @@ spec:
   - match:
     - uri:
         prefix: /api/payment
-    - uri:
-        prefix: /api/payments
     route:
     - destination:
-        host: payment-svc.default.svc.cluster.local
+        host: payment-svc.app-services.svc.cluster.local
         port:
           number: 8083
     timeout: 30s
@@ -101,7 +99,7 @@ spec:
         exact: /
     route:
     - destination:
-        host: user-svc.default.svc.cluster.local
+        host: user-svc.app-services.svc.cluster.local
         port:
           number: 8080
     timeout: 10s

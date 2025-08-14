@@ -2,9 +2,9 @@ apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
   name: user-service-destination
-  namespace: default
+  namespace: app-services
 spec:
-  host: user-svc.default.svc.cluster.local
+  host: user-svc.app-services.svc.cluster.local
   trafficPolicy:
     loadBalancer:
       simple: LEAST_CONN
@@ -30,9 +30,9 @@ apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
   name: product-service-destination
-  namespace: default
+  namespace: app-services
 spec:
-  host: product-svc.default.svc.cluster.local
+  host: product-svc.app-services.svc.cluster.local
   trafficPolicy:
     loadBalancer:
       simple: LEAST_CONN
@@ -58,9 +58,9 @@ apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
   name: order-service-destination
-  namespace: default
+  namespace: app-services
 spec:
-  host: order-svc.default.svc.cluster.local
+  host: order-svc.app-services.svc.cluster.local
   trafficPolicy:
     loadBalancer:
       simple: LEAST_CONN
@@ -86,9 +86,9 @@ apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
   name: payment-service-destination
-  namespace: default
+  namespace: app-services
 spec:
-  host: payment-svc.default.svc.cluster.local
+  host: payment-svc.app-services.svc.cluster.local
   trafficPolicy:
     loadBalancer:
       simple: LEAST_CONN
@@ -114,9 +114,9 @@ apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
   name: cart-service-destination
-  namespace: default
+  namespace: app-services
 spec:
-  host: cart-svc.default.svc.cluster.local
+  host: cart-svc.app-services.svc.cluster.local
   trafficPolicy:
     loadBalancer:
       simple: LEAST_CONN
@@ -143,9 +143,9 @@ apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
   name: mysql-destination
-  namespace: default
+  namespace: app-services
 spec:
-  host: mysql.default.svc.cluster.local
+  host: mysql.app-services.svc.cluster.local
   trafficPolicy:
     loadBalancer:
       simple: ROUND_ROBIN
@@ -159,9 +159,9 @@ apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
   name: redis-destination
-  namespace: default
+  namespace: app-services
 spec:
-  host: redis.default.svc.cluster.local
+  host: redis.app-services.svc.cluster.local
   trafficPolicy:
     loadBalancer:
       simple: ROUND_ROBIN
