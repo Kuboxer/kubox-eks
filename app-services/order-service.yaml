@@ -18,6 +18,7 @@ spec:
       containers:
       - name: order-service
         image: 862016452072.dkr.ecr.us-east-2.amazonaws.com/kubox:order-service-latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8082
           name: http
@@ -36,22 +37,22 @@ spec:
             path: /actuator/health
             port: 8082
           periodSeconds: 5
-          failureThreshold: 40
+          failureThreshold: 20
           timeoutSeconds: 2
         livenessProbe:
           httpGet:
             path: /actuator/health
             port: 8082
-          periodSeconds: 10
+          periodSeconds: 15
           timeoutSeconds: 2
-          failureThreshold: 3
+          failureThreshold: 5
         readinessProbe:
           httpGet:
             path: /actuator/health
             port: 8082
-          periodSeconds: 10
+          periodSeconds: 15
           timeoutSeconds: 2
-          failureThreshold: 3
+          failureThreshold: 5
         resources:
           requests:
             memory: "256Mi"
@@ -117,3 +118,5 @@ spec:
   #     - type: Percent
   #       value: 10
   #       periodSeconds: 60
+
+

@@ -49,6 +49,7 @@ kubectl apply -f istio/destination-rules.yaml
 echo "7️⃣ 기존 ALB Ingress 삭제..."
 kubectl delete -f ingress.yaml --ignore-not-found=true
 echo "✅ ALB Ingress 삭제 완료. Istio Gateway만 사용합니다."
+kubectl delete -f app-services/first-init.yaml
 
 # 8. Istio Gateway 외부 IP 확인
 echo "8️⃣ Istio Gateway 외부 IP 확인..."
