@@ -17,7 +17,7 @@ spec:
       serviceAccountName: kubox-secrets-sa
       containers:
       - name: order-service
-        image: 862016452072.dkr.ecr.us-east-2.amazonaws.com/kubox:order-service-latest
+        image: 862016452072.dkr.ecr.us-east-2.amazonaws.com/kubox:order-service-v5
         imagePullPolicy: Always
         ports:
         - containerPort: 8082
