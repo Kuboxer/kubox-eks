@@ -18,11 +18,11 @@ kubectl delete -f app-services/product-service.yaml --ignore-not-found=true
 kubectl delete -f app-services/user-service.yaml --ignore-not-found=true
 
 echo "⏳ 애플리케이션 Pod 종료 대기..."
-kubectl wait -n "$NS" --for=delete pod -l app=payment-service --timeout=120s --ignore-not-found=true
-kubectl wait -n "$NS" --for=delete pod -l app=order-service --timeout=120s --ignore-not-found=true
-kubectl wait -n "$NS" --for=delete pod -l app=cart-service --timeout=120s --ignore-not-found=true
-kubectl wait -n "$NS" --for=delete pod -l app=product-service --timeout=120s --ignore-not-found=true
-kubectl wait -n "$NS" --for=delete pod -l app=user-service --timeout=120s --ignore-not-found=true
+kubectl wait -n "$NS" --for=delete pod -l app=payment-service --timeout=120s 2>/dev/null || true
+kubectl wait -n "$NS" --for=delete pod -l app=order-service --timeout=120s 2>/dev/null || true
+kubectl wait -n "$NS" --for=delete pod -l app=cart-service --timeout=120s 2>/dev/null || true
+kubectl wait -n "$NS" --for=delete pod -l app=product-service --timeout=120s 2>/dev/null || true
+kubectl wait -n "$NS" --for=delete pod -l app=user-service --timeout=120s 2>/dev/null || true
 echo "✅ 애플리케이션 서비스 삭제 완료"
 
 # 3. 인프라 서비스 삭제
@@ -31,8 +31,8 @@ kubectl delete -f app-services/redis.yaml --ignore-not-found=true
 kubectl delete -f app-services/mysql.yaml --ignore-not-found=true
 
 echo "⏳ 인프라 서비스 종료 대기..."
-kubectl wait -n "$NS" --for=delete pod/redis-0 --timeout=120s --ignore-not-found=true
-kubectl wait -n "$NS" --for=delete pod/mysql-0 --timeout=120s --ignore-not-found=true
+kubectl wait -n "$NS" --for=delete pod/redis-0 --timeout=120s 2>/dev/null || true
+kubectl wait -n "$NS" --for=delete pod/mysql-0 --timeout=120s 2>/dev/null || true
 echo "✅ 인프라 서비스 삭제 완료"
 
 # 4. PVC 삭제 (데이터 완전 삭제)
