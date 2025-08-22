@@ -17,7 +17,7 @@ spec:
       serviceAccountName: kubox-secrets-sa
       containers:
       - name: product-service
-        image: 862016452072.dkr.ecr.ap-northeast-2.amazonaws.com/kubox:product-service-v1
+        image: 862016452072.dkr.ecr.ap-northeast-2.amazonaws.com/kubox:product-service-v2
         imagePullPolicy: Always
         ports:
         - containerPort: 8081
