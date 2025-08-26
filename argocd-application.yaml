@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kubox-shoppingmall
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Kuboxer/kubox-helm-chart.git  # 본인 GitHub repo URL로 변경
+    path: .
+    targetRevision: main
+    helm:
+      valueFiles:
+        - values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: app-services
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true 
+    syncOptions:
+    - CreateNamespace=true
