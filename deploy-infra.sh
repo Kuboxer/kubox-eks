@@ -17,11 +17,11 @@ echo "✅ 시크릿 생성 확인:"
 kubectl get secrets -n "$NS" | grep kubox
 
 # 4. 인프라 서비스 배포
-echo "4️⃣ 인프라 서비스 배포 (MySQL, Redis)..."
-kubectl apply -f app-services/mysql.yaml
+# echo "4️⃣ 인프라 서비스 배포 (MySQL, Redis)..."
+# kubectl apply -f app-services/mysql.yaml
 # kubectl apply -f app-services/redis.yaml
-echo "⏳ 인프라 서비스 준비 대기..."
-kubectl wait -n "$NS" --for=condition=ready pod/mysql-0 --timeout=300s
+# echo "⏳ 인프라 서비스 준비 대기..."
+# kubectl wait -n "$NS" --for=condition=ready pod/mysql-0 --timeout=300s
 # kubectl wait -n "$NS" --for=condition=ready pod/redis-0 --timeout=300s
 
 # 6. Istio 설정 적용
