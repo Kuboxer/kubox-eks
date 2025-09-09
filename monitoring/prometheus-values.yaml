@@ -1,0 +1,161 @@
+namespaceOverride: monitoring
+
+# --------------------------------------------
+# Prometheus 설정
+# --------------------------------------------
+prometheus:
+  # ServiceAccount 설정 (values-thanos-sidecar.yaml에서 가져옴)
+  serviceAccount:
+    create: false
+    name: prometheus-kube-prometheus-prometheus
+    annotations:
+      eks.amazonaws.com/role-arn: arn:aws:iam::862016452072:role/kubox-thanos-s3-access-role
+
+  prometheusSpec:
+    replicas: 1
+    # 메트릭 보관 기간 (Thanos 사용시 짧게)
+    retention: 1h
+    retentionSize: "1GB"
+    
+    # External Labels (Thanos 필수 설정)
+    externalLabels:
+      cluster: kubox-eks
+      region: ap-northeast-2
+      replica: $(HOSTNAME)
+    
+    # Thanos Sidecar 설정 (values-thanos-sidecar.yaml에서 가져옴)
+    thanos:
+      enabled: true
+      image: quay.io/thanos/thanos:v0.36.1
+      version: v0.36.1
+      objectStorageConfig:
+        name: thanos-objstore
+        key: objstore.yaml
+      blockSize: 1m
+    
+    # Admin API 활성화 (Thanos 필요)
+    enableAdminAPI: true
+    
+    # 로컬 PVC 설정
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 5Gi  # thanos-sidecar.yaml에서 5Gi였음
+          storageClassName: standard  # 원래 설정 유지
+    
+    # 리소스 제한
+    resources:
+      limits:
+        cpu: 200m
+        memory: 4Gi
+      requests:
+        cpu: 10m
+        memory: 10Mi
+    
+    # Alertmanager 연결
+    alerting:
+      alertmanagers:
+      - namespace: monitoring
+        name: prometheus-kube-prometheus-alertmanager
+        port: 9093
+
+# --------------------------------------------
+# Prometheus Operator 설정
+# --------------------------------------------
+prometheusOperator:
+  resources:
+    limits:
+      cpu: 50m
+      memory: 128Mi
+    requests:
+      cpu: 10m
+      memory: 10Mi
+
+# --------------------------------------------
+# Grafana 설정
+# --------------------------------------------
+grafana:
+  enabled: true
+  service:
+    type: ClusterIP
+  adminPassword: admin123
+  
+  resources:
+    limits:
+      cpu: 100m
+      memory: 512Mi
+    requests:
+      cpu: 10m
+      memory: 10Mi
+  
+  # 데이터소스 설정 (Thanos Query 추가)
+  additionalDataSources:
+    - name: Prometheus
+      type: prometheus
+      url: http://prometheus-kube-prometheus-prometheus:9090
+      access: proxy
+    - name: Thanos-Query
+      type: prometheus
+      url: http://thanos-query:9090
+      access: proxy
+    - name: Loki
+      type: loki
+      url: http://loki:3100
+      access: proxy
+
+# --------------------------------------------
+# Alertmanager 설정
+# --------------------------------------------
+alertmanager:
+  enabled: true
+  alertmanagerSpec:
+    resources:
+      limits:
+        cpu: 50m
+        memory: 128Mi
+      requests:
+        cpu: 10m
+        memory: 10Mi
+  
+  config:
+    global:
+      resolve_timeout: 1m
+    route:
+      receiver: 'slack-notifications'
+      group_by: ['alertname']
+      group_wait: 10s
+      group_interval: 1m
+      repeat_interval: 15m
+    receivers:
+    - name: 'slack-notifications'
+      slack_configs:
+      - api_url: 'https://hooks.slack.com/services/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'
+        channel: 'kubox-app-notice'
+        send_resolved: true
+    - name: 'null'
+
+# --------------------------------------------
+# Kube-State-Metrics / NodeExporter
+# --------------------------------------------
+kube-state-metrics:
+  enabled: true
+  resources:
+    limits:
+      cpu: 50m
+      memory: 128Mi
+    requests:
+      cpu: 10m
+      memory: 10Mi
+
+prometheus-node-exporter:
+  enabled: true
+  resources:
+    limits:
+      cpu: 50m
+      memory: 128Mi
+    requests:
+      cpu: 10m
+      memory: 10Mi

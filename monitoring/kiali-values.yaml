@@ -1,0 +1,56 @@
+#kiali-values.yaml (Finalized)
+
+istio_namespace: istio-system # 이 필드를 명시적으로 추가
+
+deployment:
+  namespace: monitoring
+  accessible_namespaces: ["istio-system", "app-services", "monitoring"]
+
+external_services:
+  # The Prometheus URL is confirmed to be correct based on your service list.
+  prometheus:
+    enabled: true
+    url: "http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090" 
+  
+  # The Grafana URL is also confirmed to be correct.
+  grafana:
+    enabled: true
+    url: "http://prometheus-grafana.monitoring.svc.cluster.local:80"
+    in_cluster_url: "http://prometheus-grafana.monitoring.svc.cluster.local:80"
+    
+  jaeger:
+    enabled: false
+    
+  istio:
+    root_namespace: "istio-system"
+    config_map_name: "istio"
+    istio_api_enabled: true
+    istio_namespace: "istio-system"
+    component_status:
+      enabled: true
+      components:
+      - app_label: istiod
+        is_core: true
+        namespace: istio-system
+        service_name: istiod
+        port: 15014
+        deployment_name: istiod  # 추가
+
+auth:
+  strategy: "anonymous"
+
+server:
+  web_fqdn: ""
+  web_port: 20001
+
+kiali_feature_flags:
+  clustering:
+    enabled: false
+
+log_level: "info"
+
+api:
+  namespaces:
+    exclude:
+    - "kube-.*"
+    - "openshift-.*"
