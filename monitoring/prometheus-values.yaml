@@ -74,6 +74,22 @@ prometheusRule:
   disabled:
     KubeSchedulerDown: true
     KubeControllerManagerDown: true
+    KubeProxyDown: true
+    KubeletDown: true
+    NodeExporterDown: true
+    KubeNodeUnreachable: true
+    KubeNodeNotReady: true
+    KubePodCrashLooping: true
+    KubePodNotReady: true
+    KubeDeploymentReplicasMismatch: true
+    NodeDiskRunningFull: true
+    NodeMemoryHighUtilization: true
+    NodeCPUHighUtilization: true
+    PrometheusTSDBCompactionsFailing: true
+    PrometheusNotConnectedToAlertmanagers: true
+    KubeCPUOvercommit: true
+    KubeDaemonSetRolloutStuck: true
+    KubeDaemonSetMisScheduled: true
 
 # ============================================
 # 기존 모니터링 컴포넌트들 (동일)
@@ -135,18 +151,24 @@ alertmanager:
     receivers:
       - name: 'slack-notifications'
         slack_configs:
-          - api_url: 'https://hooks.slack.com/services/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'
+          - api_url: 'https://hooks.slack.com/services/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'
             channel: '새-채널'
             title: '{{ if eq .Status "firing" }}🔥 알람 발생{{ else }}✅ 알람 해결{{ end }}'
-            text: |
+            text: |          
               {{ range .Alerts }}
+              {{ if eq .Status "firing" }}
               *알람*: {{ .Labels.alertname }}
               *서비스*: {{ .Labels.pod }}
               *네임스페이스*: {{ .Labels.namespace }}
               *심각도*: {{ .Labels.severity }}
-              *요약*: {{ .Annotations.summary }}
+              현재 CPU 사용률: {{ .Annotations.summary }}
               *상세*: {{ .Annotations.description }}
-              {{ end }}            
+              {{ else }}
+              *알람*: {{ .Labels.alertname }}
+              *서비스*: {{ .Labels.pod }}
+              CPU 사용률이 정상으로 돌아왔습니다.
+              {{ end }}
+              {{ end }}              
             send_resolved: true
       - name: 'null'
 
