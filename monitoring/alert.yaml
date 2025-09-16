@@ -1,0 +1,35 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: app-services-cpu-alert
+  namespace: monitoring
+  labels:
+    release: prometheus
+    prometheus: kube-prometheus
+spec:
+  groups:
+  - name: app-services.cpu
+    rules:
+    # CPU Request 대비 사용률로 계산
+    - alert: AppServiceHighCPUUsage
+      expr: |
+        (
+          rate(container_cpu_usage_seconds_total{namespace="app-services", container!="POD", container!=""}[1m]) 
+          / 
+          on(pod, container) kube_pod_container_resource_requests{namespace="app-services", resource="cpu"}
+        ) * 100 > 60
+      for: 15s
+      labels:
+        severity: warning
+        namespace: app-services
+      annotations:
+        summary: "⚠️ [{{ $labels.namespace }}] {{ $labels.pod }} CPU 사용률 60% 초과"
+        description: |
+          서비스: {{ $labels.pod }}
+          네임스페이스: {{ $labels.namespace }}
+          현재 CPU 사용률: {{ $value | printf "%.1f" }}% (request 대비)
+          노드: {{ $labels.node }}
+          
+          즉시 확인이 필요합니다!
+          📊 대시보드: http://grafana-url/dashboard
+          🔍 로그: kubectl logs {{ $labels.pod }} -n {{ $labels.namespace }}
