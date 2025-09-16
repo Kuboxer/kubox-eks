@@ -29,8 +29,15 @@ loki:
     server:
       http_listen_port: 3100 # Promtail HTTP 서버가 수신할 포트 설정
       grpc_listen_port: 9095 # gRPC 서버 포트
-    
-    # S3 연동 설정 
+
+    # 청크 설정 추가
+    ingester:    
+      chunk_idle_period: 2h
+      chunk_retain_period: 1h
+      max_chunk_age: 2h 
+      chunk_target_size: 3145728 # 3MB
+
+    # S3 연동 설정
     storage_config:
       aws: #장기 
         bucketnames: kubox-loki-logs
