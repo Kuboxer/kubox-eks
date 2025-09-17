@@ -20,7 +20,7 @@ spec:
         ) * 100 > 60
       for: 15s
       labels:
-        severity: warning
+        severity: critical
         namespace: app-services
       annotations:
         summary: "⚠️ [{{ $labels.namespace }}] {{ $labels.pod }} CPU 사용률 60% 초과"
@@ -31,5 +31,4 @@ spec:
           노드: {{ $labels.node }}
           
           즉시 확인이 필요합니다!
-          📊 대시보드: http://grafana-url/dashboard
           🔍 로그: kubectl logs {{ $labels.pod }} -n {{ $labels.namespace }}
