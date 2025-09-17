@@ -31,6 +31,6 @@ spec:
         prefix: /
     route:
     - destination:
-        host: jaeger-all-in-one-jaeger-collector.monitoring.svc.cluster.local
+        host: jaeger-all-in-one.monitoring.svc.cluster.local
         port:
           number: 16686
