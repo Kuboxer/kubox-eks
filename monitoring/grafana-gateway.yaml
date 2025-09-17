@@ -1,0 +1,32 @@
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway #외부 트래픽이 클러스터로 들어오는 진입점 역할 
+metadata:
+  name: grafana-gateway
+  namespace: monitoring
+spec:
+  selector:
+    istio: ingressgateway   # Istio 설치 시 생성되는 Ingress Gateway pod에 gateway 설정 붙인다. 
+  servers:
+  - port:
+      number: 80  # 외부에서 들어오는 포트 (HTTP 80)
+      name: http
+      protocol: HTTP
+    hosts:
+    - "grafana.kubox.shop" # 이 도메인으로 들어온 요청만 받는다. 
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService 
+metadata:
+  name: grafana-vs #게이트웨이를 통과한 트래픽을 특정 서비스로 라우팅하는 규칙을 정의 
+  namespace: monitoring
+spec:
+  hosts:
+  - "grafana.kubox.shop"
+  gateways:
+  - grafana-gateway #위에서 설정한 gateway, 내가 처리할 요청은 여기서 들어온 요청이다. 
+  http:
+  - route:
+    - destination:
+        host: prometheus-grafana.monitoring.svc.cluster.local #cluster ip 서비스의 주소 
+        port:
+          number: 80
