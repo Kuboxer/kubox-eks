@@ -70,6 +70,7 @@ prometheus:
           name: prometheus-kube-prometheus-alertmanager
           port: 9093
 
+# 기본 알람 규칙 비활성화
 prometheusRule:
   disabled:
     KubeSchedulerDown: true
@@ -143,15 +144,27 @@ alertmanager:
     global:
       resolve_timeout: 1m
     route:
-      receiver: 'slack-notifications'
+      receiver: 'default-receiver'
       group_by: ['alertname']
       group_wait: 0s
       group_interval: 5s
       repeat_interval: 1m
+      routes:
+        # EKS 관리 컴포넌트 알람들 모두 무시
+        - match_re:
+            alertname: ^(KubeSchedulerDown|KubeControllerManagerDown|KubeProxyDown)$
+          receiver: 'null'
+        # critical 심각도만 Slack으로 전송
+        - match:
+            severity: critical
+          receiver: 'slack-notifications'
+        # 나머지는 모두 무시
+        - match: {}
+          receiver: 'null'
     receivers:
       - name: 'slack-notifications'
         slack_configs:
-          - api_url: 'https://hooks.slack.com/services/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'
+          - api_url: 'https://hooks.slack.com/services/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'
             channel: '새-채널'
             title: '{{ if eq .Status "firing" }}🔥 알람 발생{{ else }}✅ 알람 해결{{ end }}'
             text: |          
@@ -161,16 +174,17 @@ alertmanager:
               *서비스*: {{ .Labels.pod }}
               *네임스페이스*: {{ .Labels.namespace }}
               *심각도*: {{ .Labels.severity }}
-              현재 CPU 사용률: {{ .Annotations.summary }}
+              *내용*: {{ .Annotations.summary }}
               *상세*: {{ .Annotations.description }}
               {{ else }}
               *알람*: {{ .Labels.alertname }}
               *서비스*: {{ .Labels.pod }}
-              CPU 사용률이 정상으로 돌아왔습니다.
+              문제가 해결되었습니다.
               {{ end }}
-              {{ end }}              
+              {{ end }}
             send_resolved: true
       - name: 'null'
+      - name: 'default-receiver'
 
 kube-state-metrics:
   enabled: true
