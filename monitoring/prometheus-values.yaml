@@ -164,8 +164,8 @@ alertmanager:
     receivers:
       - name: 'slack-notifications'
         slack_configs:
-          - api_url: 'https://hooks.slack.com/services/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'
-            channel: '새-채널'
+          - api_url: 'https://hooks.slack.com/services/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'
+            channel: 'kubox-alert'
             title: '{{ if eq .Status "firing" }}🔥 알람 발생{{ else }}✅ 알람 해결{{ end }}'
             text: |          
               {{ range .Alerts }}
