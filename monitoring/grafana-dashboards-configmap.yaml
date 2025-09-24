@@ -450,13 +450,15 @@ data:
       "editable": true,
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
-      "id": 30,
+      "id": 3,
       "links": [
         {
           "asDropdown": true,
           "includeVars": true,
           "keepTime": true,
-          "tags": ["kubox"],
+          "tags": [
+            "kubox"
+          ],
           "targetBlank": false,
           "title": "Kubernetes",
           "type": "dashboards"
@@ -735,7 +737,8 @@ data:
               "custom": {
                 "align": "auto",
                 "cellOptions": {
-                  "type": "auto"
+                  "mode": "gradient",
+                  "type": "color-background"
                 },
                 "inspect": false
               },
@@ -744,22 +747,39 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
+                    "color": "transparent",
                     "value": 0
-                  },
-                  {
-                    "color": "#EAB839",
-                    "value": 50
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
                   }
                 ]
               },
               "unit": "short"
             },
-            "overrides": []
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Requests 대비 CPU 사용률"
+                },
+                "properties": [
+                  {
+                    "id": "thresholds",
+                    "value": {
+                      "mode": "absolute",
+                      "steps": [
+                        {
+                          "color": "transparent",
+                          "value": 0
+                        },
+                        {
+                          "color": "red",
+                          "value": 60
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
           },
           "gridPos": {
             "h": 8,
@@ -786,7 +806,7 @@ data:
               }
             ]
           },
-          "pluginVersion": "12.1.0",
+          "pluginVersion": "12.1.1",
           "targets": [
             {
               "datasource": {
@@ -1125,7 +1145,9 @@ data:
       "preload": false,
       "refresh": "5s",
       "schemaVersion": 41,
-      "tags": ["kubox"],
+      "tags": [
+        "kubox"
+      ],
       "templating": {
         "list": [
           {
@@ -1187,7 +1209,7 @@ data:
       "timezone": "Asia/Seoul",
       "title": "KUBOX-POD CPU/MEMORY 사용량",
       "uid": "20251",
-      "version": 3
+      "version": 1
     }
   app-service-logs.json: |
     {
@@ -1330,3 +1352,4 @@ data:
       "uid": "7de91cd4-fabc-4c30-9d6b-08641f989cc3",
       "version": 1
     }
+              "
