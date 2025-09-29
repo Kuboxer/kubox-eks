@@ -1,0 +1,89 @@
+
+enabled: true
+replicaCount: 1
+
+image:
+  repository: jaegertracing/all-in-one
+  pullPolicy: IfNotPresent
+  versionOverride: "*"
+
+healthCheckUrl: /
+imagePullSecrets: []
+fullnameOverride: ""
+terminationGracePeriodSeconds: 10
+
+# 환경변수 설정 (Istio 트레이싱을 위한 핵심 설정)
+environmentVariables:
+  SPAN_STORAGE_TYPE: memory
+  MEMORY_MAX_TRACES: 100000
+  COLLECTOR_OTLP_ENABLED: true
+  COLLECTOR_ZIPKIN_HOST_PORT: ":9411"
+  # Badger 스토리지 비활성화
+  BADGER_EPHEMERAL: false
+  BADGER_DIRECTORY_VALUE: ""
+  BADGER_DIRECTORY_KEY: ""
+
+# Zipkin 컬렉터 활성화 (Istio와 통신용)
+enableHttpZipkinCollector: true
+enableHttpOpenTelemetryCollector: true
+
+serviceAccount:
+  create: true
+  name: ""
+
+# Istio sidecar injection을 위한 어노테이션
+podAnnotations: 
+  prometheus.io/scrape: "true"
+  prometheus.io/path: "/metrics"
+  prometheus.io/port: "14269"
+  #sidecar.istio.io/inject: "true"
+
+podSecurityContext: {}
+securityContext: {}
+
+# ClusterIP 서비스 (Istio Gateway를 통해 접근)
+service:
+  type: ClusterIP
+  port: 16686
+  annotations:
+    prometheus.io/probe: "true"
+    prometheus.io/probe-path: "/"
+  headless:
+    annotations: {}
+
+# Ingress 비활성화 (Istio Gateway 사용)
+ingress:
+  enabled: false
+
+# 리소스 설정 (올인원 환경에 적합)
+resources:
+  limits:
+    cpu: 500m
+    memory: 1Gi
+  requests:
+    cpu: 10m
+    memory: 128Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# 볼륨 비활성화 (인메모리 사용)
+volume:
+  enabled: false
+
+tests:
+  enabled: true
+
+# Health check 설정
+livenessProbe:
+  periodSeconds: 10
+  timeoutSeconds: 3
+  failureThreshold: 3
+  successThreshold: 1
+
+readinessProbe:
+  periodSeconds: 10
+  timeoutSeconds: 3
+  failureThreshold: 3
+  successThreshold: 1

@@ -1,0 +1,147 @@
+# ============================================
+# Object Store 설정 (S3) - 시크릿으로 관리
+# ============================================
+existingObjstoreSecret: "thanos-objstore"
+existingObjstoreSecretItems:
+  - key: objstore.yaml
+    path: objstore.yml
+
+# ============================================
+# Thanos Query 설정 (이미 있음)
+# ============================================
+query:
+  enabled: true
+  # ... 기존 설정 유지
+
+# ============================================
+# Thanos Store Gateway 설정
+# ============================================
+storegateway:
+  enabled: true
+  replicaCount: 1
+  
+  serviceAccount:
+    create: true
+    name: "thanos-storegateway"
+    annotations:
+      eks.amazonaws.com/role-arn: "arn:aws:iam::862016452072:role/kubox-thanos-s3-access-role"
+    automountServiceAccountToken: true
+  
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: 
+  
+  resources:
+    requests:
+      cpu: 10m
+      memory: 128Mi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+
+# ============================================
+# Thanos Compactor 설정
+# ============================================
+compactor:
+  enabled: true
+  
+  serviceAccount:
+    create: true
+    name: "thanos-compactor"
+    annotations:
+      eks.amazonaws.com/role-arn: "arn:aws:iam::862016452072:role/kubox-thanos-s3-access-role"
+    automountServiceAccountToken: true
+  
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: 
+  
+  retentionResolutionRaw: 30d
+  retentionResolution5m: 120d
+  retentionResolution1h: 1y
+  
+  resources:
+    requests:
+      cpu: 10m
+      memory: 128Mi
+    limits:
+      cpu: 1000m
+      memory: 4Gi
+
+# # ============================================
+# # Thanos Ruler 설정 (선택사항)
+# # ============================================
+# ruler:
+#   enabled: true
+#   replicaCount: 1
+  
+#   serviceAccount:
+#     create: true
+#     name: "thanos-ruler"
+#     annotations:
+#       eks.amazonaws.com/role-arn: "arn:aws:iam::862016452072:role/kubox-thanos-s3-access-role"
+#     automountServiceAccountToken: true
+  
+#   alertmanagers:
+#     - "http://alertmanager.monitoring.svc.cluster.local:9093"
+  
+#   queries:
+#     - "http://thanos-query.monitoring.svc.cluster.local:9090"
+  
+#   ruleNamespaceSelector: {}
+#   ruleSelector: {}
+  
+#   persistence:
+#     enabled: true
+#     size: 8Gi
+#     storageClass: "gp3"
+  
+#   resources:
+#     requests:
+#       cpu: 100m
+#       memory: 256Mi
+#     limits:
+#       cpu: 1000m
+#       memory: 2Gi
+
+# # ============================================
+# # Thanos Query Frontend 설정 (선택사항)
+# # ============================================
+# queryFrontend:
+#   enabled: true
+#   replicaCount: 1
+  
+#   service:
+#     type: ClusterIP
+#     ports:
+#       http: 9090
+  
+#   config: |
+#     type: IN-MEMORY
+#     config:
+#       max_size: 1GB
+#       max_size_items: 1000
+#       validity: 0s
+  
+#   resources:
+#     requests:
+#       cpu: 100m
+#       memory: 256Mi
+#     limits:
+#       cpu: 500m
+#       memory: 1Gi
+
+# ============================================
+# 공통 설정
+# ============================================
+
+# 메트릭 설정
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    namespace: monitoring
+    labels:
+      release: prometheus

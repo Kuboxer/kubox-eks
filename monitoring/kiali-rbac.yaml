@@ -1,0 +1,31 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kiali-istio-config-reader
+rules:
+- apiGroups: [""]
+  resources: ["configmaps", "endpoints", "pods", "services"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["extensions", "apps"]
+  resources: ["deployments", "replicasets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["networking.istio.io", "security.istio.io", "config.istio.io"]
+  resources: ["*"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["networking.k8s.io"]
+  resources: ["networkpolicies"]
+  verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kiali-istio-config-reader-binding
+subjects:
+- kind: ServiceAccount
+  name: kiali
+  namespace: monitoring
+roleRef:
+  kind: ClusterRole
+  name: kiali-istio-config-reader
+  apiGroup: rbac.authorization.k8s.io

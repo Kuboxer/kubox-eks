@@ -1,0 +1,207 @@
+namespaceOverride: monitoring
+
+# ============================================
+# Prometheus 설정
+# ============================================
+prometheus:
+  # ServiceAccount 설정 (IRSA)
+  serviceAccount:
+    create: true
+    name: prometheus-thanos
+    annotations:
+      eks.amazonaws.com/role-arn: arn:aws:iam::862016452072:role/kubox-thanos-s3-access-role
+    automountServiceAccountToken: true
+  
+  # Thanos Service 설정 (Service Discovery용)
+  thanosService:
+    enabled: true
+    type: ClusterIP
+    clusterIP: "None"  # Headless service for discovery
+    portName: grpc
+    port: 10901
+    targetPort: "grpc"
+  
+  prometheusSpec:
+    replicas: 1
+    retention: 6h  #최신 6시간 동안의 데이터를 로컬 디스크에 임시로 보관
+    
+    # 클러스터 구분용 외부 레이블
+    externalLabels:
+      cluster: kubox-eks
+      region: ap-northeast-2
+      replica: $(HOSTNAME)
+    
+    # Thanos 전용 설정
+    disableCompaction: true  # 로컬 압축 비활성화, Thanos Compactor에게 맡긴다. 
+    
+    # 스토리지 설정
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 5Gi
+          storageClassName: standard
+    
+    # 리소스 제한
+    resources:
+      requests:
+        cpu: 10m
+        memory: 10Mi
+      limits:
+        cpu: 200m
+        memory: 4Gi
+    
+    # Thanos Sidecar 설정
+    thanos:
+      baseImage: quay.io/thanos/thanos
+      version: v0.37.1  # 수정: v0.36.1 → v0.37.1 (프로토콜 호환성)
+      grpcListenLocal: false
+      objectStorageConfig:
+        existingSecret:
+          name: thanos-objstore
+          key: objstore.yaml
+    
+    # Alertmanager 연결
+    alerting:
+      alertmanagers:
+        - namespace: monitoring
+          name: prometheus-kube-prometheus-alertmanager
+          port: 9093
+
+# 기본 알람 규칙 비활성화
+prometheusRule:
+  disabled:
+    KubeSchedulerDown: true
+    KubeControllerManagerDown: true
+    KubeProxyDown: true
+    KubeletDown: true
+    NodeExporterDown: true
+    KubeNodeUnreachable: true
+    KubeNodeNotReady: true
+    KubePodCrashLooping: true
+    KubePodNotReady: true
+    KubeDeploymentReplicasMismatch: true
+    NodeDiskRunningFull: true
+    NodeMemoryHighUtilization: true
+    NodeCPUHighUtilization: true
+    PrometheusTSDBCompactionsFailing: true
+    PrometheusNotConnectedToAlertmanagers: true
+    KubeCPUOvercommit: true
+    KubeDaemonSetRolloutStuck: true
+    KubeDaemonSetMisScheduled: true
+
+# ============================================
+# 기존 모니터링 컴포넌트들 (동일)
+# ============================================
+prometheusOperator:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 10Mi
+    limits:
+      cpu: 50m
+      memory: 128Mi
+
+grafana:
+  enabled: true
+  adminPassword: admin123
+  service:
+    type: ClusterIP
+  resources:
+    requests:
+      cpu: 10m
+      memory: 10Mi
+    limits:
+      cpu: 100m
+      memory: 512Mi
+  additionalDataSources:
+    - name: Prometheus
+      type: prometheus
+      url: http://prometheus-kube-prometheus-prometheus:9090
+      access: proxy
+    - name: Thanos Query  # 추가: Thanos Query 데이터소스
+      type: prometheus
+      url: http://thanos-query:9090
+      access: proxy
+    - name: Loki
+      type: loki
+      url: http://loki:3100
+      access: proxy
+
+alertmanager:
+  enabled: true
+  alertmanagerSpec:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 10Mi
+      limits:
+        cpu: 50m
+        memory: 128Mi
+  config:
+    global:
+      resolve_timeout: 1m
+    route:
+      receiver: 'default-receiver'
+      group_by: ['alertname']
+      group_wait: 0s
+      group_interval: 5s
+      repeat_interval: 1m
+      routes:
+        # EKS 관리 컴포넌트 알람들 모두 무시
+        - match_re:
+            alertname: ^(KubeSchedulerDown|KubeControllerManagerDown|KubeProxyDown)$
+          receiver: 'null'
+        # critical 심각도만 Slack으로 전송
+        - match:
+            severity: critical
+          receiver: 'slack-notifications'
+        # 나머지는 모두 무시
+        - match: {}
+          receiver: 'null'
+    receivers:
+      - name: 'slack-notifications'
+        slack_configs:
+          - api_url: 'https://hooks.slack.com/services/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'
+            channel: 'kubox-alert'
+            title: '{{ if eq .Status "firing" }}🔥 알람 발생{{ else }}✅ 알람 해결{{ end }}'
+            text: |          
+              {{ range .Alerts }}
+              {{ if eq .Status "firing" }}
+              *알람*: {{ .Labels.alertname }}
+              *서비스*: {{ .Labels.pod }}
+              *네임스페이스*: {{ .Labels.namespace }}
+              *심각도*: {{ .Labels.severity }}
+              *내용*: {{ .Annotations.summary }}
+              *상세*: {{ .Annotations.description }}
+              {{ else }}
+              *알람*: {{ .Labels.alertname }}
+              *서비스*: {{ .Labels.pod }}
+              문제가 해결되었습니다.
+              {{ end }}
+              {{ end }}
+            send_resolved: true
+      - name: 'null'
+      - name: 'default-receiver'
+
+kube-state-metrics:
+  enabled: true
+  resources:
+    requests:
+      cpu: 10m
+      memory: 10Mi
+    limits:
+      cpu: 50m
+      memory: 128Mi
+
+prometheus-node-exporter:
+  enabled: true
+  resources:
+    requests:
+      cpu: 10m
+      memory: 10Mi
+    limits:
+      cpu: 50m
+      memory: 128Mi

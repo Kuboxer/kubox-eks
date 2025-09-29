@@ -1,0 +1,104 @@
+loki:
+  enabled: true #Loki 관련 Deploy/StatefulSet, CM 등 생성
+
+#IRSA 사용해서 EKS POD S3에 접근 가능하게 설정 
+  serviceAccount: 
+    create: true 
+    name: loki
+    annotations:
+      eks.amazonaws.com/role-arn: arn:aws:iam::862016452072:role/kubox-cluster-s3-monitoring-loki-access-ap-northeast-2
+
+  resources:
+    requests:
+      cpu: 10m
+      memory: 10Mi
+    limits:
+      cpu: 50m
+      memory: 256Mi
+
+  # persistence 활성화 (Boltdb-shipper 로컬 디렉토리)
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: standard
+
+ # S3 백엔드 설정 (Loki 공식 문서 기준)
+  config: 
+    auth_enabled: false
+    
+    server:
+      http_listen_port: 3100 # Promtail HTTP 서버가 수신할 포트 설정
+      grpc_listen_port: 9095 # gRPC 서버 포트
+
+    # 청크 설정 추가
+    ingester:    
+      chunk_idle_period: 2h
+      chunk_retain_period: 1h
+      max_chunk_age: 2h 
+      chunk_target_size: 3145728 # 3MB
+
+    # S3 연동 설정
+    storage_config:
+      aws: #장기 
+        bucketnames: kubox-loki-logs
+        region: ap-northeast-2
+      boltdb_shipper: #단기 
+        active_index_directory: /data/loki/boltdb-shipper-active
+        cache_location: /data/loki/boltdb-shipper-cache
+        shared_store: s3 
+    
+    schema_config:
+      configs:
+        - from: 2024-01-01
+          store: boltdb-shipper
+          object_store: s3
+          schema: v11
+          index:
+            prefix: kubox_loki_index_
+            period: 24h
+    
+    limits_config:
+      #retention_period: 168h #S3 로그 보관 기간 설정(7일) -> glacier 쓸거라 주석 
+      split_queries_by_interval: 15m #loki가 쿼리를 분할하는 간격 설정
+      
+promtail:
+  enabled: true
+  resources:
+    requests:
+      cpu: 10m
+      memory: 10Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+  config:
+  #promtail이 로그 보낼 loki 서버 주소 설정 
+    clients: 
+      - url: http://loki:3100/loki/api/v1/push 
+  #promtail이 어디서 어떤 로그 수집할지 정의     
+    scrape_configs: 
+      - job_name: kubernetes-pods
+        kubernetes_sd_configs:
+          - role: pod
+        pipeline_stages:
+          - cri: {}
+        relabel_configs:
+          # app-services 네임스페이스만 수집
+          - source_labels: [__meta_kubernetes_namespace]
+            regex: app-services
+            action: keep
+          # 파드 이름 라벨 추가
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod
+          # 네임스페이스 라벨 추가
+          - source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace
+          # 컨테이너 이름 라벨 추가
+          - source_labels: [__meta_kubernetes_pod_container_name]
+            target_label: container
+
+grafana:
+  enabled: false
+
+prometheus:
+  enabled: false
+
