@@ -7,10 +7,10 @@ echo "1️⃣ AWS Secrets Manager 연동 설정..."
 kubectl apply -f app-services/secret-provider-class.yaml
 
 # 2. 시크릿 생성 테스트 Job
-echo "2️⃣ 시크릿 생성 테스트..."
-kubectl apply -f app-services/first-init.yaml
-echo "⏳ 시크릿 생성 대기 중..."
-kubectl wait -n "$NS" --for=condition=ready pod/secrets-test --timeout=300s
+# echo "2️⃣ 시크릿 생성 테스트..."
+# kubectl apply -f app-services/first-init.yaml
+# echo "⏳ 시크릿 생성 대기 중..."
+# kubectl wait -n "$NS" --for=condition=ready pod/secrets-test --timeout=300s
 
 # 3. 시크릿 생성 확인
 echo "✅ 시크릿 생성 확인:"
@@ -30,8 +30,8 @@ kubectl apply -f istio/gateway.yaml
 kubectl apply -f istio/virtual-service.yaml
 kubectl apply -f istio/destination-rules.yaml
 
-# 7. first-init 삭제
-kubectl delete -f app-services/first-init.yaml
+# # 7. first-init 삭제
+# kubectl delete -f app-services/first-init.yaml
 
 kubectl apply -f argocd-application.yaml
 
